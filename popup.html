@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Focus Mode</h1>
+        </div>
+        
+        <div class="toggle-section">
+            <label class="switch">
+                <input type="checkbox" id="focusToggle">
+                <span class="slider round"></span>
+            </label>
+            <span class="toggle-label" id="toggleLabel">Focus Mode: OFF</span>
+        </div>
+        
+        <div class="urls-section">
+            <label for="blockedUrls">Blocked Websites:</label>
+            <textarea 
+                id="blockedUrls" 
+                placeholder="Enter website URLs, one per line:&#10;reddit.com&#10;old.reddit.com&#10;youtube.com/watch"
+                rows="6"
+            ></textarea>
+            <div class="help-text">
+                <strong>How blocking works:</strong><br>
+                <strong>Base domains</strong> (reddit.com) → blocks ALL of Reddit including old.reddit.com, www.reddit.com, etc.<br>
+                <strong>Subdomains</strong> (old.reddit.com) → blocks ONLY old Reddit, not main Reddit<br>
+                <strong>Paths</strong> (youtube.com/watch) → blocks only YouTube videos, not homepage<br>
+                <strong>Subdomain paths</strong> (old.reddit.com/gallery) → blocks only old Reddit galleries
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button id="saveBtn" class="save-btn">Save Settings</button>
+        </div>
+        
+        <div class="status" id="status"></div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html> 

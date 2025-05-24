@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Focus Mode - Website Blocker",
+  "version": "1.0",
+  "description": "Block distracting websites to maintain focus",
+  "permissions": [
+    "storage",
+    "declarativeNetRequest",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Focus Mode"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+} 
