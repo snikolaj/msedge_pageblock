@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const focusToggle = document.getElementById('focusToggle');
     const toggleLabel = document.getElementById('toggleLabel');
+    const focusContext = document.getElementById('focusContext');
     const blockedUrls = document.getElementById('blockedUrls');
     const saveBtn = document.getElementById('saveBtn');
     const status = document.getElementById('status');
@@ -17,9 +18,10 @@ document.addEventListener('DOMContentLoaded', function() {
     saveBtn.addEventListener('click', saveSettings);
 
     function loadSettings() {
-        chrome.storage.sync.get(['focusModeEnabled', 'blockedUrls'], function(result) {
+        chrome.storage.sync.get(['focusModeEnabled', 'blockedUrls', 'focusContext'], function(result) {
             focusToggle.checked = result.focusModeEnabled || false;
             blockedUrls.value = result.blockedUrls || '';
+            focusContext.value = result.focusContext || '';
             updateToggleLabel();
         });
     }
@@ -47,11 +49,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 return url;
             });
 
+        // Add this log
+        console.log('Popup: Sending to background:', { isEnabled, urls: urlList, rawUrlsInput: urls });
+
+        const context = focusContext.value.trim();
+
         // Save to storage
         chrome.storage.sync.set({
             focusModeEnabled: isEnabled,
             blockedUrls: urls,
-            blockedUrlsList: urlList
+            blockedUrlsList: urlList,
+            focusContext: context
         }, function() {
             if (chrome.runtime.lastError) {
                 showStatus('Error saving settings!', 'error');
@@ -62,7 +70,8 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.runtime.sendMessage({
                 action: 'updateRules',
                 enabled: isEnabled,
-                urls: urlList
+                urls: urlList,
+                context: context
             }, function(response) {
                 if (chrome.runtime.lastError) {
                     showStatus('Error updating blocking rules!', 'error');
@@ -82,10 +91,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
 
-    // Auto-save when typing in textarea (with 1500ms delay)
+    // Auto-save when typing in textareas (with 1500ms delay)
     let saveTimeout;
     blockedUrls.addEventListener('input', function() {
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(saveSettings, 1500);
     });
-}); 
+    
+    focusContext.addEventListener('input', function() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(saveSettings, 1500);
+    });
+});
