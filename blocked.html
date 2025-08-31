@@ -153,11 +153,21 @@
 </head>
 <body>
     <div class="container">
-        <h1>Focus Mode Active</h1>
-        <p class="subtitle">This website is currently blocked to help you stay focused</p>
+        <div class="icon" id="blockIcon">🚫</div>
+        <h1 id="blockTitle">Focus Mode Active</h1>
+        <p class="subtitle" id="blockSubtitle">This website is currently blocked to help you stay focused</p>
         
-        <div class="message">
+        <div class="blocked-url" id="blockedUrl">
+            <!-- The blocked URL will be inserted here by JavaScript -->
+        </div>
+        
+        <div class="message" id="blockMessage">
             <p>Focus Mode is helping you avoid distractions. Consider using this time for something more productive!</p>
+        </div>
+        
+        <div class="focus-tip" id="focusTip" style="display: none;">
+            <h3>🎯 AI Focus Assistant</h3>
+            <p id="focusContext">This page was blocked because it doesn't seem relevant to your current focus context.</p>
         </div>
         
         <div class="buttons">
@@ -166,40 +176,6 @@
         </div>
     </div>
 
-    <script>
-        // Get the blocked URL from query parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const blockedUrl = urlParams.get('blocked');
-        
-        if (blockedUrl) {
-            document.getElementById('blockedUrl').textContent = decodeURIComponent(blockedUrl);
-        } else {
-            document.getElementById('blockedUrl').textContent = 'Unknown website';
-        }
-
-        function openExtensionPopup() {
-            // This will try to open the extension popup
-            // Note: In newer Chrome versions, this may not work due to security restrictions
-            try {
-                chrome.runtime.sendMessage({action: 'openPopup'});
-            } catch (e) {
-                alert('Please click the Focus Mode extension icon in your browser toolbar to manage settings.');
-            }
-        }
-
-        // Add some interactive elements
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add a subtle animation
-            const container = document.querySelector('.container');
-            container.style.opacity = '0';
-            container.style.transform = 'translateY(20px)';
-            
-            setTimeout(() => {
-                container.style.transition = 'all 0.5s ease';
-                container.style.opacity = '1';
-                container.style.transform = 'translateY(0)';
-            }, 100);
-        });
-    </script>
+    <script src="blocked.js"></script>
 </body>
-</html> 
+</html>
