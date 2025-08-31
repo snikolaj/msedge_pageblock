@@ -6,7 +6,8 @@
   "permissions": [
     "storage",
     "declarativeNetRequest",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -20,8 +21,11 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["blocked.html"],
+      "resources": ["blocked.html", "blocked.js"],
       "matches": ["<all_urls>"]
     }
-  ]
-} 
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
