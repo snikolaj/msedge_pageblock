@@ -18,6 +18,17 @@
             <span class="toggle-label" id="toggleLabel">Focus Mode: OFF</span>
         </div>
         
+        <div class="timer-section" id="timerSection" style="display: none;">
+            <div class="timer-display">
+                <span class="timer-icon">⏱️</span>
+                <span class="timer-text">Focus Mode locked for: </span>
+                <span class="timer-countdown" id="timerCountdown">30:00</span>
+            </div>
+            <div class="timer-help">
+                Focus Mode cannot be disabled until the timer expires.
+            </div>
+        </div>
+        
         <div class="context-section">
             <label for="focusContext">🤖 AI Focus Context</label>
             <textarea id="focusContext" placeholder="Describe what you're focusing on (e.g., 'studying for biology exam', 'working on React project')..."></textarea>
@@ -39,6 +50,18 @@
                 <strong>Subdomains</strong> (old.reddit.com) → blocks ONLY old Reddit, not main Reddit<br>
                 <strong>Paths</strong> (youtube.com/watch) → blocks only YouTube videos, not homepage<br>
                 <strong>Subdomain paths</strong> (old.reddit.com/gallery) → blocks only old Reddit galleries
+            </div>
+        </div>
+        
+        <div class="whitelist-section">
+            <label for="whitelistedUrls">Always Allowed Websites:</label>
+            <textarea 
+                id="whitelistedUrls" 
+                placeholder="Enter website URLs that should never be blocked, one per line:&#10;work.company.com&#10;docs.google.com&#10;github.com"
+                rows="4"
+            ></textarea>
+            <div class="help-text">
+                <strong>Whitelist Priority:</strong> These websites will always be accessible, even if they would normally be blocked by the blacklist or AI assistant. Uses the same pattern matching rules as the blacklist.
             </div>
         </div>
         
