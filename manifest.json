@@ -17,7 +17,13 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Focus Mode"
+    "default_title": "Focus Mode",
+    "default_icon": {
+      "16": "icon-inactive-16-16.png",
+      "32": "icon-inactive-32-32.png",
+      "48": "icon-inactive-48-48.png",
+      "128": "icon-inactive-128-128.png"
+    }
   },
   "web_accessible_resources": [
     {
@@ -27,5 +33,11 @@
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "icons": {
+    "16": "icon-inactive-16-16.png",
+    "32": "icon-inactive-32-32.png",
+    "48": "icon-inactive-48-48.png",
+    "128": "icon-inactive-128-128.png"
   }
 }
