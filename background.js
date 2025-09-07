@@ -1,17 +1,22 @@
 // Background script for Focus Mode extension
 
 let currentRules = [];
+let currentWhitelist = [];
 let currentFocusContext = '';
 
 // TODO: Replace with your actual Gemini API key from the prepi file
-const GEMINI_API_KEY = '[INSERT-YOUR-API-KEY-HERE]';
+const GEMINI_API_KEY = '[YOUR-API-KEY-HERE]';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(function() {
     console.log('Focus Mode extension installed');
     loadSettings();
-    updateIcon();
+    // Add delay for Edge compatibility
+    setTimeout(() => {
+        console.log('Setting initial icon...');
+        updateIcon();
+    }, 100);
 });
 
 // Listen for tab updates to check AI relevance
@@ -40,7 +45,8 @@ chrome.runtime.onStartup.addListener(function() {
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === 'updateRules') {
         currentFocusContext = request.context || '';
-        console.log(`[AI BLOCKING] Rules updated - Focus context: "${currentFocusContext}", Enabled: ${request.enabled}, URLs: ${request.urls?.length || 0}`);
+        currentWhitelist = request.whitelist || [];
+        console.log(`[AI BLOCKING] Rules updated - Focus context: "${currentFocusContext}", Enabled: ${request.enabled}, URLs: ${request.urls?.length || 0}, Whitelist: ${currentWhitelist.length}`);
         updateBlockingRules(request.enabled, request.urls)
             .then(() => {
                 sendResponse({ success: true });
@@ -54,9 +60,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 function loadSettings() {
-    chrome.storage.sync.get(['focusModeEnabled', 'blockedUrlsList', 'focusContext'], function(result) {
+    chrome.storage.sync.get(['focusModeEnabled', 'blockedUrlsList', 'whitelistedUrlsList', 'focusContext'], function(result) {
         const isEnabled = result.focusModeEnabled || false;
         const urls = result.blockedUrlsList || [];
+        currentWhitelist = result.whitelistedUrlsList || [];
         currentFocusContext = result.focusContext || '';
         updateBlockingRules(isEnabled, urls);
     });
@@ -437,28 +444,65 @@ async function updateBlockingRules(enabled, urls) {
     }
 }
 
-// Handle extension icon click to show current status
-chrome.action.onClicked.addListener(function(tab) {
-    chrome.storage.sync.get(['focusModeEnabled'], function(result) {
-        const isEnabled = result.focusModeEnabled || false;
-        const iconPath = isEnabled ? 'icon-active.png' : 'icon-inactive.png';
-        
-        chrome.action.setIcon({
-            path: iconPath,
-            tabId: tab.id
-        });
-    });
-});
+// Note: chrome.action.onClicked does not fire when default_popup is set in manifest
+// Icon updates are handled by updateIcon() function called from storage changes
 
 // Update icon based on focus mode status
 function updateIcon() {
+    console.log('updateIcon() called');
     chrome.storage.sync.get(['focusModeEnabled'], function(result) {
         const isEnabled = result.focusModeEnabled || false;
-        const iconPath = isEnabled ? 'icon-active.png' : 'icon-inactive.png';
+        console.log('Focus mode enabled:', isEnabled);
         
-        chrome.action.setIcon({
-            path: iconPath
-        });
+        // Try Edge-compatible approach: use relative paths without leading slash
+        const iconPaths = isEnabled ? {
+            "16": "icon-active-16-16.png",
+            "32": "icon-active-32-32.png",
+            "48": "icon-active-48-48.png",
+            "128": "icon-active-128-128.png"
+        } : {
+            "16": "icon-inactive-16-16.png",
+            "32": "icon-inactive-32-32.png",
+            "48": "icon-inactive-48-48.png",
+            "128": "icon-inactive-128-128.png"
+        };
+        
+        console.log('Attempting to set icon with paths:', iconPaths);
+        
+        // Try Edge-compatible method: set icon without callback first
+        try {
+            chrome.action.setIcon({
+                path: iconPaths
+            });
+            console.log('Icon set successfully (no callback)');
+        } catch (error) {
+            console.error('Synchronous icon setting failed:', error);
+            
+            // Fallback: try with callback
+            chrome.action.setIcon({
+                path: iconPaths
+            }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error setting icon in updateIcon (callback):', chrome.runtime.lastError.message);
+                    console.error('Full lastError object:', chrome.runtime.lastError);
+                    
+                    // Try single icon as fallback for Edge
+                    const singleIcon = isEnabled ? "icon-active-16-16.png" : "icon-inactive-16-16.png";
+                    console.log('Trying fallback single icon:', singleIcon);
+                    chrome.action.setIcon({
+                        path: singleIcon
+                    }, () => {
+                        if (chrome.runtime.lastError) {
+                            console.error('Fallback single icon also failed:', chrome.runtime.lastError.message);
+                        } else {
+                            console.log('Fallback single icon succeeded');
+                        }
+                    });
+                } else {
+                    console.log('Icon set successfully (with callback)');
+                }
+            });
+        }
     });
 }
 
@@ -583,15 +627,36 @@ async function handleTabNavigation(tabId, url) {
         }
 
         // Get current settings
-        const result = await chrome.storage.sync.get(['focusModeEnabled', 'blockedUrlsList', 'focusContext']);
+        const result = await chrome.storage.sync.get(['focusModeEnabled', 'blockedUrlsList', 'whitelistedUrlsList', 'focusContext']);
         const isEnabled = result.focusModeEnabled || false;
         const blockedUrls = result.blockedUrlsList || [];
+        const whitelistedUrls = result.whitelistedUrlsList || [];
         const focusContext = result.focusContext || '';
         
-        console.log(`[AI BLOCKING] Settings - Enabled: ${isEnabled}, Context: "${focusContext}", Blocked URLs: ${blockedUrls.length}`);
+        console.log(`[AI BLOCKING] Settings - Enabled: ${isEnabled}, Context: "${focusContext}", Blocked URLs: ${blockedUrls.length}, Whitelisted URLs: ${whitelistedUrls.length}`);
         
         if (!isEnabled) {
             console.log(`[AI BLOCKING] Focus mode disabled, allowing URL: ${url}`);
+            return;
+        }
+
+        // Check whitelist first - if URL is whitelisted, always allow
+        const isWhitelisted = whitelistedUrls.some(whitelistedUrl => {
+            if (whitelistedUrl.trim() === '') return false;
+            try {
+                const matches = url.toLowerCase().includes(whitelistedUrl.toLowerCase());
+                if (matches) {
+                    console.log(`[AI BLOCKING] URL matches whitelist: ${whitelistedUrl}`);
+                }
+                return matches;
+            } catch (e) {
+                console.error(`[AI BLOCKING] Error checking whitelist item "${whitelistedUrl}":`, e);
+                return false;
+            }
+        });
+
+        if (isWhitelisted) {
+            console.log(`[AI BLOCKING] URL whitelisted, allowing: ${url}`);
             return;
         }
 
